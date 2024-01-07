@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,6 +18,12 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   PusherChannelsFlutter pusher = PusherChannelsFlutter.getInstance();
   String _log = 'output:\n';
+  // static String setHost = '';
+  // static int setWsPort = '';
+  // static int setWssPort = '';
+  final _port = TextEditingController();
+  final _host = TextEditingController();
+
   final _apiKey = TextEditingController();
   final _cluster = TextEditingController();
   final _channelName = TextEditingController();
@@ -51,7 +57,9 @@ class _MyAppState extends State<MyApp> {
     // Remove keyboard
     FocusScope.of(context).requestFocus(FocusNode());
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString("host", _host.text);
     prefs.setString("apiKey", _apiKey.text);
+    prefs.setString("port", _port.text);
     prefs.setString("cluster", _cluster.text);
     prefs.setString("channelName", _channelName.text);
 
@@ -59,6 +67,9 @@ class _MyAppState extends State<MyApp> {
       await pusher.init(
         apiKey: _apiKey.text,
         cluster: _cluster.text,
+        setHost: _host.text,
+        setWsPort: int.parse(_port.text),
+        setEncrypted: false,
         onConnectionStateChange: onConnectionStateChange,
         onError: onError,
         onSubscriptionSucceeded: onSubscriptionSucceeded,
@@ -68,6 +79,8 @@ class _MyAppState extends State<MyApp> {
         onMemberAdded: onMemberAdded,
         onMemberRemoved: onMemberRemoved,
         onSubscriptionCount: onSubscriptionCount,
+        useTLS: false,
+
         // authEndpoint: "<Your Authendpoint Url>",
         // onAuthorizer: onAuthorizer
       );
@@ -147,10 +160,10 @@ class _MyAppState extends State<MyApp> {
     if (!mounted) return;
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      _apiKey.text = prefs.getString("apiKey") ?? '';
+      _apiKey.text = prefs.getString("apiKey") ?? 'laravel-app-key';
       _cluster.text = prefs.getString("cluster") ?? 'eu';
-      _channelName.text = prefs.getString("channelName") ?? 'my-channel';
-      _eventName.text = prefs.getString("eventName") ?? 'client-event';
+      _channelName.text = prefs.getString("channelName") ?? 'public';
+      _eventName.text = prefs.getString("eventName") ?? 'public';
       _data.text = prefs.getString("data") ?? 'test';
     });
   }
@@ -175,6 +188,28 @@ class _MyAppState extends State<MyApp> {
                   Form(
                       key: _channelFormKey,
                       child: Column(children: <Widget>[
+                        TextFormField(
+                          controller: _host,
+                          validator: (String? value) {
+                            return (value != null && value.isEmpty)
+                                ? 'Please enter your host.'
+                                : null;
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Host',
+                          ),
+                        ),
+                        TextFormField(
+                          controller: _port,
+                          validator: (String? value) {
+                            return (value != null && value.isEmpty)
+                                ? 'Please enter your port.'
+                                : null;
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'wsPort',
+                          ),
+                        ),
                         TextFormField(
                           controller: _apiKey,
                           validator: (String? value) {
